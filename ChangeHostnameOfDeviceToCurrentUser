@@ -1,0 +1,6 @@
+# Sets the hostname of your local device to the current logged in user for monitoring. for example: JDOE-PC 
+$user = $(Get-WMIObject -class Win32_ComputerSystem | select username).username | split-path -Leaf
+$newname = $user + "-" + "PC"
+Write-Output($env:COMPUTERNAME + " Will Be Renamed:" + $newname)
+Rename-Computer -NewName $newname -Restart -WhatIf
+Rename-Computer -NewName $newname

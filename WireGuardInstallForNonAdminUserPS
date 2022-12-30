@@ -1,0 +1,47 @@
+# This script uses Powershell to install Wireguard, add the local non-admin user to the Network Confiuration Operators
+# group in Windows, then makes the registry changes to allow a Local User without Admin Privledges to use Wireguard as a VPN. 
+
+# Check if WireGuard is already installed
+$product = (Get-WmiObject -Class Win32_Product | Where-Object { $_.Name -match "WireGuard" })
+
+# If WireGuard is not installed, download and install it
+if (!$product) {
+    # Download the WireGuard installation file
+    $url = "https://download.wireguard.com/windows-client/wireguard-installer.exe"
+    $output = "wireguard-installer.exe"
+    Invoke-WebRequest -Uri $url -OutFile $output
+
+    # Install WireGuard silently
+    Start-Process -FilePath $output -ArgumentList "/S" -Wait
+
+    # Display a message indicating that WireGuard was successfully installed
+    Write-Host "WireGuard successfully installed."
+}
+# If WireGuard is already installed, display a message
+else {
+    Write-Host "WireGuard is already installed on this device."
+}
+
+#Get the current username of the Windows User.
+$username = $(Get-WMIObject -class Win32_ComputerSystem | select username).username | split-path -Leaf
+
+echo $username
+
+# Check if the Network Operators group exists
+if (-not (Get-LocalGroup -Name "Network Configuration Operators")) {
+    # Create the group if it doesn't exist
+    New-LocalGroup -Name "Network Configuration Operators"
+}
+
+# Add the user to the Network Configuration Operators group
+Add-LocalGroupMember -Group "Network Configuration Operators" -Member $username
+
+# Create the registry key if it doesn't exist
+if (-not (Test-Path "HKLM:\Software\Wireguard")) {
+    New-Item -Path "HKLM:\Software" -Name "Wireguard" -ItemType "Key"
+}
+
+# Create the new property for the registry key
+New-ItemProperty "HKLM:\Software\Wireguard" -Name "LimitedOperatorUI" -Value 1 -PropertyType "DWord" -Force
+
+echo "Script Complete."

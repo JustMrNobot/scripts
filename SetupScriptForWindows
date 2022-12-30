@@ -1,0 +1,46 @@
+# Setup Script for Machines after SmartDeploy image.
+
+#enables system restore
+powershell -command "Enable-ComputerRestore -Drive C:"
+​
+#sets system restore percentual size to 5%
+vssadmin resize shadowstorage /for=C: /on=C: /maxsize=5%
+​
+echo System Restore Enabled. Set to 5%
+​
+# Enables Bitlocker
+Enable-BitLocker -MountPoint "C:" -EncryptionMethod Aes128 -SkipHardwareTest -UsedSpaceOnly -RecoveryPasswordProtector
+​
+echo Bitlocker enabled.
+​
+#Creates Local User Accounts
+$Username = Read-Host -Prompt 'Input new username'
+$Password = Read-Host -Prompt 'Input new users password'
+$Computername = Read-Host -Prompt 'Input new computer name'
+​
+NET USER NewUser $Password
+Rename-LocalUser -Name "NewUser" -NewName $Username
+Rename-Computer -NewName $Computername
+​
+Write-Host "Your new user's name is '$Username' with the password '$Password' and the PC name is '$Computername'"
+​
+# Outputs Windows Key
+wmic path SoftwareLicensingService get OA3xOriginalProductKey
+​
+#checks bitlocker status.
+manage-bde -status
+
+#saves bitlocker recovery key to USB.
+(Get-BitLockerVolume -MountPoint C).KeyProtector.recoverypassword > D:\$Username+BitlockerRecoveryKey.txt
+​
+echo Changing ExecutionPolicy to Restricted.  
+Set-ExecutionPolicy Restricted
+​
+echo Script is complete.
+​
+$input = Read-Host "Restart computer now [y/n]"
+switch($input){
+          y{Restart-computer -Force -Confirm:$false}
+          n{exit}
+    default{write-warning "Invalid Input"}
+}

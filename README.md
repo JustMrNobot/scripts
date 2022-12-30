@@ -1,1 +1,1 @@
-# scripts & projects!
+# Scripts!

@@ -1,0 +1,22 @@
+# Silent Install For AWS Client VPN
+
+# Check if the AWS VPN Client is already installed
+$product = (Get-WmiObject -Class Win32_Product | Where-Object { $_.Name -match "AWS VPN Client" })
+
+# If the AWS VPN Client is not installed, download and install it
+if (!$product) {
+    # Download the AWS VPN Client installation file
+    $url = "[AWS CLIENT VPN URL]"
+    $output = "AWS_VPN_Client.msi"
+    Invoke-WebRequest -Uri $url -OutFile $output
+
+    # Install the AWS VPN Client silently
+    Start-Process -FilePath msiexec.exe -ArgumentList "/i $output /qn /norestart" -Wait
+
+    # Display a message indicating that the AWS VPN Client was successfully installed
+    Write-Host "AWS VPN Client successfully installed."
+}
+# If the AWS VPN Client is already installed, display a message
+else {
+    Write-Host "AWS VPN Client is already installed on this device."
+}

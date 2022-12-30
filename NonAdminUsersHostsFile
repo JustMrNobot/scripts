@@ -1,0 +1,9 @@
+#Allows non-admin users to edit their hosts file to edit their local hosts file.
+
+cd c:\Windows\System32\Drivers\etc
+
+$accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule("Everyone","FullControl","Allow")
+
+$acl = Get-Acl hosts
+$acl.AddAccessRule($accessRule)
+Set-Acl hosts $acl
